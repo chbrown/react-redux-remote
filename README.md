@@ -1,6 +1,7 @@
 # react-redux-remote
 
-Hook into the `onStateChange` handler provided by a [`react-redux`](https://github.com/reactjs/react-redux) `connect()`'ed component.
+Hook into the `componentDidMount` and `componentWillReceiveProps` stages of the React component lifecycle,
+extracting `props` as managed by the `selector` of a [`react-redux`](https://github.com/reactjs/react-redux) `connect()`'ed component.
 
     import remote from 'react-redux-remote'
 

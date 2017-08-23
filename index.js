@@ -1,7 +1,8 @@
 import hoistStatics from 'hoist-non-react-statics'
 
 /**
-Wrap an already-`react-redux`-wrapped component to listen for onStateChange() calls.
+Wrap an already-`react-redux`-wrapped component to listen for componentDidMount
+and componentWillReceiveProps calls.
 When state changes, this function will:
 1. Call mapPropsToDependencies with the current props (from both react-redux's
    mapStateToProps and the component's ownProps), returning a list of dependencies.
@@ -22,23 +23,30 @@ ensureDependency(dependency: Dependency,
                  getState: () => Store)
 
 ConnectedComponent: a React component that's already been run through
-react-redux's connect, which provides the onStateChange method and
-this.selector.props property.
+react-redux's connect, which provides ConnectedComponent#selector.props
 */
 function remote(mapPropsToDependencies, ensureDependency) {
   return function wrapWithRemote(ConnectedComponent) {
     class RemoteConnectedComponent extends ConnectedComponent {
-      onStateChange() {
-        // a connected component's onStateChange method calls
-        // this.selector.run(this.props), which updates this.selector.props.
-        super.onStateChange()
-        const {props} = this.selector
+      ensureDependencies(props) {
         const dependencies = mapPropsToDependencies(props)
         dependencies.forEach(dependency => {
           props.dispatch((dispatch, getState) => {
             ensureDependency(dependency, dispatch, getState)
           })
         })
+      }
+      componentDidMount() {
+        // a connected component's componentDidMount method calls
+        // this.selector.run(this.props), which updates this.selector.props
+        super.componentDidMount()
+        this.ensureDependencies(this.selector.props)
+      }
+      componentWillReceiveProps(nextProps) {
+        // a connected component's componentWillReceiveProps method calls
+        // this.selector.run(nextProps), which updates this.selector.props
+        super.componentWillReceiveProps(nextProps)
+        this.ensureDependencies(this.selector.props)
       }
     }
     RemoteConnectedComponent.displayName = `Remote(${ConnectedComponent.displayName})`
